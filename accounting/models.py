@@ -383,7 +383,7 @@ class OrderItem(models.Model):
 
 class ItemPropertyType(models.Model):
     """Define types of properties that items can have (color, brand, size, etc.)"""
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=20, choices=[
         ('text', 'Text'),
         ('number', 'Number'),
@@ -394,10 +394,18 @@ class ItemPropertyType(models.Model):
         ('multiple_choice', 'Multiple Choice'),
     ])
     is_required = models.BooleanField(default=False)
+    company = models.ForeignKey(
+        'core.Company',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='item_property_types'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'item_property_types'
+        unique_together = [('name', 'company')]
         
     def __str__(self):
         return self.name
@@ -411,11 +419,18 @@ class ItemPropertyValue(models.Model):
         related_name='possible_values'
     )
     value = models.CharField(max_length=255)
+    company = models.ForeignKey(
+        'core.Company',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='item_property_values'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'item_property_values'
-        unique_together = [('property_type', 'value')]
+        unique_together = [('property_type', 'value', 'company')]
         
     def __str__(self):
         return f'{self.property_type.name}: {self.value}'
