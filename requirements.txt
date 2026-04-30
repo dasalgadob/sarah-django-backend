@@ -6,6 +6,7 @@ python-dotenv==1.0.1
 django-cors-headers==4.6.0
 djangorestframework-simplejwt==5.3.1
 django-extensions==3.2.3
+django-filter==24.3
 
 # Production dependencies
 gunicorn==21.2.0
