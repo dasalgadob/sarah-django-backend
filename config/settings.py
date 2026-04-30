@@ -224,5 +224,9 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = os.environ.get('DISABLE_SSL_REDIRECT', 'False') != 'True'
     SESSION_COOKIE_SECURE = os.environ.get('DISABLE_SSL_REDIRECT', 'False') != 'True'
     CSRF_COOKIE_SECURE = os.environ.get('DISABLE_SSL_REDIRECT', 'False') != 'True'
+    CSRF_TRUSTED_ORIGINS = [
+        'https://backend.sarahcode.com',
+        'https://sarah-django-backend-prod.eba-bpvywzk9.us-west-2.elasticbeanstalk.com',
+    ]
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
