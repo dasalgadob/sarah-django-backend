@@ -156,15 +156,17 @@ SPECTACULAR_SETTINGS = {
 # CORS settings
 # ---------------------------------------------------------------------------
 # Allow all origins during development (you may want to restrict this in production)
-CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'
+CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False') == 'True'
 
-# If you want to specify specific origins instead of allowing all:
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",  # React default
-#     "http://127.0.0.1:3000",
-#     "http://localhost:8080",  # Vue default
-#     "http://127.0.0.1:8080",
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "https://main.diy26xzziiqak.amplifyapp.com",
+    "https://sarahcode.com",
+    "https://www.sarahcode.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
 
 # Allow credentials to be sent with CORS requests
 CORS_ALLOW_CREDENTIALS = True
