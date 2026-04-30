@@ -218,11 +218,7 @@ if not DEBUG:
     
     # Add whitenoise middleware after security middleware
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-    
-    # Use Cloud Storage for media files in production
-    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-    GS_BUCKET_NAME = os.environ.get('GS_BUCKET_NAME', 'your-bucket-name')
-    
+
     # Security settings for production
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = os.environ.get('DISABLE_SSL_REDIRECT', 'False') != 'True'
