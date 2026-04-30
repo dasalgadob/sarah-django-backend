@@ -222,7 +222,7 @@ if not DEBUG:
     # Security settings for production
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = os.environ.get('DISABLE_SSL_REDIRECT', 'False') != 'True'
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = os.environ.get('DISABLE_SSL_REDIRECT', 'False') != 'True'
+    CSRF_COOKIE_SECURE = os.environ.get('DISABLE_SSL_REDIRECT', 'False') != 'True'
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
