@@ -1,7 +1,7 @@
 """Order related serializers."""
 
 from rest_framework import serializers
-from ..models import Order, OrderItem, ItemPropertyType, ItemPropertyValue, ItemProperty
+from ..models import Order, OrderItem, ItemPropertyType, ItemPropertyValue, ItemProperty, ItemPropertyDataType
 
 
 class OrderItemCreateSerializer(serializers.Serializer):
@@ -155,19 +155,28 @@ class ItemPropertyValueSerializer(serializers.ModelSerializer):
         fields = ['id', 'property_type', 'property_type_name', 'value', 'created_at']
 
 
+class ItemPropertyDataTypeSerializer(serializers.ModelSerializer):
+    """Serializer for ItemPropertyDataType model."""
+
+    class Meta:
+        model = ItemPropertyDataType
+        fields = ['id', 'code', 'name', 'name_es']
+
+
 class ItemPropertyTypeSerializer(serializers.ModelSerializer):
     """Serializer for ItemPropertyType model."""
     possible_values = ItemPropertyValueSerializer(many=True, read_only=True)
-    
+    data_type_detail = ItemPropertyDataTypeSerializer(source='data_type', read_only=True)
+
     class Meta:
         model = ItemPropertyType
-        fields = ['id', 'name', 'data_type', 'is_required', 'possible_values', 'created_at']
+        fields = ['id', 'name', 'data_type', 'data_type_detail', 'is_required', 'possible_values', 'created_at']
 
 
 class ItemPropertySerializer(serializers.ModelSerializer):
     """Serializer for ItemProperty model."""
     property_type_name = serializers.CharField(source='property_type.name', read_only=True)
-    property_type_data_type = serializers.CharField(source='property_type.data_type', read_only=True)
+    property_type_data_type = serializers.CharField(source='property_type.data_type.code', read_only=True)
     display_value = serializers.CharField(source='get_value', read_only=True)
     
     class Meta:
@@ -181,7 +190,7 @@ class ItemPropertySerializer(serializers.ModelSerializer):
     def validate(self, data):
         """Ensure only the correct value field is populated based on property type."""
         property_type = data['property_type']
-        data_type = property_type.data_type
+        data_type = property_type.data_type.code if property_type.data_type else None
         
         # Clear all value fields first
         value_fields = ['text_value', 'number_value', 'decimal_value', 'boolean_value', 'date_value', 'choice_value']

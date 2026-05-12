@@ -4,7 +4,8 @@ from django.contrib import admin
 
 from .models import (
     Country, ItemGroup, Item, ItemPrice, ThirdParty,
-    Order, OrderItem, OrderCounter, ItemPropertyType, ItemPropertyValue, ItemProperty
+    Order, OrderItem, OrderCounter, ItemPropertyType, ItemPropertyValue, ItemProperty,
+    ItemPropertyDataType
 )
 
 
@@ -115,6 +116,12 @@ class ItemPropertyAdmin(admin.ModelAdmin):
     def get_value(self, obj):
         return obj.get_value()
     get_value.short_description = 'Value'
+
+
+@admin.register(ItemPropertyDataType)
+class ItemPropertyDataTypeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'name_es']
+    search_fields = ['code', 'name', 'name_es']
 
 
 @admin.register(OrderCounter)

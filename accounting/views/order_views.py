@@ -7,10 +7,10 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 
-from ..models import Order, OrderItem, ItemPropertyType, ItemPropertyValue, ItemProperty
+from ..models import Order, OrderItem, ItemPropertyType, ItemPropertyValue, ItemProperty, ItemPropertyDataType
 from ..serializers.order_serializer import (
     OrderSerializer, OrderCreateSerializer, OrderItemSerializer,
-    ItemPropertyTypeSerializer, ItemPropertyValueSerializer, ItemPropertySerializer
+    ItemPropertyDataTypeSerializer, ItemPropertyTypeSerializer, ItemPropertyValueSerializer, ItemPropertySerializer
 )
 
 
@@ -126,12 +126,19 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         )
 
 
+class ItemPropertyDataTypeViewSet(viewsets.ModelViewSet):
+    """ViewSet for ItemPropertyDataType — the available data types for item properties."""
+    queryset = ItemPropertyDataType.objects.all()
+    serializer_class = ItemPropertyDataTypeSerializer
+    pagination_class = None  # small, static list — return all
+
+
 class ItemPropertyTypeViewSet(viewsets.ModelViewSet):
     """ViewSet for ItemPropertyType management."""
     queryset = ItemPropertyType.objects.all()
     serializer_class = ItemPropertyTypeSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['data_type', 'is_required']
+    filterset_fields = ['data_type', 'data_type__code', 'is_required']
     search_fields = ['name']
     ordering_fields = ['name', 'created_at']
     ordering = ['name']
@@ -145,7 +152,7 @@ class ItemPropertyTypeViewSet(viewsets.ModelViewSet):
         """Add a possible value to a choice-based property type."""
         property_type = self.get_object()
         
-        if property_type.data_type not in ['choice', 'multiple_choice']:
+        if property_type.data_type and property_type.data_type.code not in ['choice', 'multiple_choice']:
             return Response(
                 {'error': 'Values can only be added to choice-based properties'}, 
                 status=status.HTTP_400_BAD_REQUEST
@@ -194,7 +201,7 @@ class ItemPropertyViewSet(viewsets.ModelViewSet):
     queryset = ItemProperty.objects.all()
     serializer_class = ItemPropertySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['item', 'property_type', 'property_type__data_type']
+    filterset_fields = ['item', 'property_type', 'property_type__data_type__code']
     search_fields = ['item__name', 'item__code', 'property_type__name', 'text_value']
     ordering_fields = ['created_at', 'property_type__name']
     ordering = ['item__name', 'property_type__name']

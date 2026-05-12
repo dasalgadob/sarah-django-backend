@@ -11,6 +11,7 @@ from .views import (
     ThirdPartyViewSet,
     OrderViewSet,
     OrderItemViewSet,
+    ItemPropertyDataTypeViewSet,
     ItemPropertyTypeViewSet,
     ItemPropertyValueViewSet,
     ItemPropertyViewSet,
@@ -25,6 +26,7 @@ router.register(r'third-parties', ThirdPartyViewSet, basename='third-party')
 # Order and Item Property management (independent resources)
 router.register(r'orders', OrderViewSet, basename='order')
 router.register(r'order-items', OrderItemViewSet, basename='order-item')
+router.register(r'item-property-data-types', ItemPropertyDataTypeViewSet, basename='item-property-data-type')
 router.register(r'item-property-types', ItemPropertyTypeViewSet, basename='item-property-type')
 router.register(r'item-property-values', ItemPropertyValueViewSet, basename='item-property-value')
 router.register(r'item-properties', ItemPropertyViewSet, basename='item-property')

@@ -11,6 +11,7 @@ from .basic_views import (
 from .order_views import (
     OrderViewSet,
     OrderItemViewSet,
+    ItemPropertyDataTypeViewSet,
     ItemPropertyTypeViewSet,
     ItemPropertyValueViewSet,
     ItemPropertyViewSet,
@@ -24,6 +25,7 @@ __all__ = [
     'ThirdPartyViewSet',
     'OrderViewSet',
     'OrderItemViewSet',
+    'ItemPropertyDataTypeViewSet',
     'ItemPropertyTypeViewSet',
     'ItemPropertyValueViewSet',
     'ItemPropertyViewSet',

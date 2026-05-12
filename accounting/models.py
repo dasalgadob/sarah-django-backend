@@ -381,18 +381,30 @@ class OrderItem(models.Model):
         return f'{self.order.order_number} - {self.item_price.item}'
 
 
+class ItemPropertyDataType(models.Model):
+    """Data types available for item properties (text, number, choice, etc.)"""
+    code = models.CharField(max_length=20, unique=True)  # internal identifier used in logic
+    name = models.CharField(max_length=100)              # English display name
+    name_es = models.CharField(max_length=100)           # Spanish display name
+
+    class Meta:
+        db_table = 'item_property_data_types'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class ItemPropertyType(models.Model):
     """Define types of properties that items can have (color, brand, size, etc.)"""
     name = models.CharField(max_length=100)
-    data_type = models.CharField(max_length=20, choices=[
-        ('text', 'Text'),
-        ('number', 'Number'),
-        ('decimal', 'Decimal'),
-        ('boolean', 'Yes/No'),
-        ('date', 'Date'),
-        ('choice', 'Single Choice'),
-        ('multiple_choice', 'Multiple Choice'),
-    ])
+    data_type = models.ForeignKey(
+        ItemPropertyDataType,
+        on_delete=models.PROTECT,
+        related_name='property_types',
+        null=True,
+        blank=True,
+    )
     is_required = models.BooleanField(default=False)
     company = models.ForeignKey(
         'core.Company',
@@ -469,17 +481,18 @@ class ItemProperty(models.Model):
         
     def get_value(self):
         """Return the actual value based on property type"""
-        if self.property_type.data_type == 'text':
+        code = self.property_type.data_type.code if self.property_type.data_type else None
+        if code == 'text':
             return self.text_value
-        elif self.property_type.data_type == 'number':
+        elif code == 'number':
             return self.number_value
-        elif self.property_type.data_type == 'decimal':
+        elif code == 'decimal':
             return self.decimal_value
-        elif self.property_type.data_type == 'boolean':
+        elif code == 'boolean':
             return self.boolean_value
-        elif self.property_type.data_type == 'date':
+        elif code == 'date':
             return self.date_value
-        elif self.property_type.data_type in ['choice', 'multiple_choice']:
+        elif code in ['choice', 'multiple_choice']:
             return self.choice_value.value if self.choice_value else None
         return None
         
