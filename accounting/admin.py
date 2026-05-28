@@ -37,6 +37,15 @@ class ItemAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(ItemPrice)
+class ItemPriceAdmin(admin.ModelAdmin):
+    list_display = ['id', 'item', 'company', 'item_price_type', 'price', 'iva', 'excise_tax', 'total', 'created_at']
+    list_filter = [('company', admin.RelatedOnlyFieldListFilter), 'item_price_type']
+    search_fields = ['item__code', 'item__name']
+    ordering = ['company', 'item__code', 'item_price_type']
+    readonly_fields = ['created_at', 'updated_at']
+
+
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
@@ -134,5 +143,4 @@ class OrderCounterAdmin(admin.ModelAdmin):
 
 admin.site.register(Country)
 admin.site.register(ItemGroup)
-admin.site.register(ItemPrice)
 admin.site.register(ThirdParty)
