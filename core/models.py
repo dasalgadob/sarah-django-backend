@@ -6,13 +6,17 @@ Manages users (via Django's built-in User), roles and companies.
 
 from django.db import models
 from django.contrib.auth.models import User
+from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
+from simple_history.models import HistoricalRecords
 
 
-class Role(models.Model):
+class Role(SafeDeleteModel):
     """Application role that can be assigned to users."""
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
     name = models.CharField(max_length=100, unique=True)
     users = models.ManyToManyField(User, related_name='roles', blank=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'roles'
@@ -21,8 +25,9 @@ class Role(models.Model):
         return self.name
 
 
-class Company(models.Model):
+class Company(SafeDeleteModel):
     """Colombian company / taxpayer registered in the system."""
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
     document_type = models.ForeignKey(
         'reference_tables.DocumentType',
@@ -62,6 +67,7 @@ class Company(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'companies'

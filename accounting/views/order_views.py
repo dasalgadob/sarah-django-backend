@@ -108,6 +108,16 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         return Response(summary)
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class OrderItemViewSet(viewsets.ModelViewSet):
     """ViewSet for OrderItem management."""
@@ -125,12 +135,32 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             'order', 'item_price', 'item_price__item', 'item_price__item__company'
         )
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class ItemPropertyDataTypeViewSet(viewsets.ModelViewSet):
     """ViewSet for ItemPropertyDataType — the available data types for item properties."""
     queryset = ItemPropertyDataType.objects.all()
     serializer_class = ItemPropertyDataTypeSerializer
     pagination_class = None  # small, static list — return all
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
 
 
 class ItemPropertyTypeViewSet(viewsets.ModelViewSet):
@@ -146,6 +176,23 @@ class ItemPropertyTypeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Include possible values in the queryset."""
         return ItemPropertyType.objects.prefetch_related('possible_values')
+
+    @action(detail=False, methods=['get', 'post'], url_path='company/(?P<company_id>[^/.]+)')
+    def by_company(self, request, company_id=None):
+        """List or create item property types for a specific company."""
+        if request.method == 'POST':
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(company_id=company_id)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        queryset = self.get_queryset().filter(company_id=company_id)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def add_value(self, request, pk=None):
@@ -180,6 +227,16 @@ class ItemPropertyTypeViewSet(viewsets.ModelViewSet):
         serializer = ItemPropertyValueSerializer(property_value)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class ItemPropertyValueViewSet(viewsets.ModelViewSet):
     """ViewSet for ItemPropertyValue management."""
@@ -194,6 +251,16 @@ class ItemPropertyValueViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Optimize queries with select_related."""
         return ItemPropertyValue.objects.select_related('property_type')
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
 
 
 class ItemPropertyViewSet(viewsets.ModelViewSet):
@@ -260,5 +327,15 @@ class ItemPropertyViewSet(viewsets.ModelViewSet):
             'created_count': len(created_properties),
             'error_count': len(errors)
         }
-        
+
         return Response(response_data, status=status.HTTP_201_CREATED if created_properties else status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)

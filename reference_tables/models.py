@@ -8,14 +8,18 @@ Contains lookup/catalogue tables:
 """
 
 from django.db import models
-from django.utils import timezone
+from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
+from simple_history.models import HistoricalRecords
 
 
-class ColombianDepartment(models.Model):
+class ColombianDepartment(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'colombian_departments'
@@ -24,7 +28,9 @@ class ColombianDepartment(models.Model):
         return f'{self.code} - {self.name}'
 
 
-class ColombianCity(models.Model):
+class ColombianCity(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     code = models.CharField(max_length=10)
     name = models.CharField(max_length=255)
     colombian_department = models.ForeignKey(
@@ -34,6 +40,7 @@ class ColombianCity(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'colombian_cities'
@@ -42,11 +49,14 @@ class ColombianCity(models.Model):
         return f'{self.code} - {self.name}'
 
 
-class DianEconomicActivity(models.Model):
+class DianEconomicActivity(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     code = models.CharField(max_length=20)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'dian_economic_activities'
@@ -55,22 +65,14 @@ class DianEconomicActivity(models.Model):
         return f'{self.code} - {self.name}'
 
 
-class ActiveDocumentTypeManager(models.Manager):
-    """Returns only non-soft-deleted document types."""
+class DocumentType(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
-    def get_queryset(self):
-        return super().get_queryset().filter(deleted_at__isnull=True)
-
-
-class DocumentType(models.Model):
     code = models.IntegerField()
     name = models.CharField(max_length=255)
-    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    objects = ActiveDocumentTypeManager()
-    all_objects = models.Manager()
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'document_types'
@@ -78,15 +80,14 @@ class DocumentType(models.Model):
     def __str__(self):
         return f'{self.code} - {self.name}'
 
-    def soft_delete(self):
-        self.deleted_at = timezone.now()
-        self.save(update_fields=['deleted_at'])
 
+class ExciseTaxType(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
-class ExciseTaxType(models.Model):
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'excise_tax_types'
@@ -95,7 +96,9 @@ class ExciseTaxType(models.Model):
         return self.name
 
 
-class ExciseTaxRate(models.Model):
+class ExciseTaxRate(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     value = models.DecimalField(max_digits=4, decimal_places=2)
     excise_tax_type = models.ForeignKey(
         ExciseTaxType,
@@ -104,6 +107,7 @@ class ExciseTaxRate(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'excise_tax_rates'
@@ -112,10 +116,13 @@ class ExciseTaxRate(models.Model):
         return f'{self.value}% ({self.excise_tax_type})'
 
 
-class IvaType(models.Model):
+class IvaType(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'iva_types'
@@ -124,7 +131,9 @@ class IvaType(models.Model):
         return self.name
 
 
-class IvaRate(models.Model):
+class IvaRate(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     value = models.DecimalField(max_digits=4, decimal_places=2)
     iva_type = models.ForeignKey(
         IvaType,
@@ -133,6 +142,7 @@ class IvaRate(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'iva_rates'
@@ -141,11 +151,14 @@ class IvaRate(models.Model):
         return f'{self.value}% ({self.iva_type})'
 
 
-class UnitMeasure(models.Model):
+class UnitMeasure(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     abbreviation = models.CharField(max_length=20)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'unit_measures'
@@ -154,10 +167,13 @@ class UnitMeasure(models.Model):
         return f'{self.abbreviation} - {self.name}'
 
 
-class SaleTypeOrder(models.Model):
+class SaleTypeOrder(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     name = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'sale_type_orders'
@@ -166,10 +182,13 @@ class SaleTypeOrder(models.Model):
         return self.name
 
 
-class PaymentMethodOrder(models.Model):
+class PaymentMethodOrder(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     name = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'payment_method_orders'

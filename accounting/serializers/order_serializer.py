@@ -170,7 +170,7 @@ class ItemPropertyTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ItemPropertyType
-        fields = ['id', 'name', 'data_type', 'data_type_detail', 'is_required', 'possible_values', 'created_at']
+        fields = ['id', 'name', 'company', 'data_type', 'data_type_detail', 'is_required', 'possible_values', 'created_at']
 
 
 class ItemPropertySerializer(serializers.ModelSerializer):

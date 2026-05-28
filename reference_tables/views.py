@@ -1,6 +1,7 @@
 """Views for the reference_tables app."""
 
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import (
@@ -42,6 +43,16 @@ class ColombianDepartmentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response({'data': serializer.data})
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class ColombianCityViewSet(viewsets.ModelViewSet):
     serializer_class = ColombianCitySerializer
@@ -69,6 +80,16 @@ class ColombianCityViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response({'data': serializer.data})
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class DianEconomicActivityViewSet(viewsets.ModelViewSet):
     queryset = DianEconomicActivity.objects.all()
@@ -81,38 +102,105 @@ class DianEconomicActivityViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response({'data': serializer.data})
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class DocumentTypeViewSet(viewsets.ModelViewSet):
     queryset = DocumentType.objects.all()
     serializer_class = DocumentTypeSerializer
 
-    def perform_destroy(self, instance):
-        instance.soft_delete()
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
 
 
 class ExciseTaxTypeViewSet(viewsets.ModelViewSet):
     queryset = ExciseTaxType.objects.all()
     serializer_class = ExciseTaxTypeSerializer
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class ExciseTaxRateViewSet(viewsets.ModelViewSet):
     queryset = ExciseTaxRate.objects.select_related('excise_tax_type').all()
     serializer_class = ExciseTaxRateSerializer
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
 
 
 class IvaTypeViewSet(viewsets.ModelViewSet):
     queryset = IvaType.objects.all()
     serializer_class = IvaTypeSerializer
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class IvaRateViewSet(viewsets.ModelViewSet):
     queryset = IvaRate.objects.select_related('iva_type').all()
     serializer_class = IvaRateSerializer
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class UnitMeasureViewSet(viewsets.ModelViewSet):
     queryset = UnitMeasure.objects.all()
     serializer_class = UnitMeasureSerializer
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
 
 
 class SaleTypeOrderViewSet(viewsets.ModelViewSet):
@@ -126,6 +214,16 @@ class SaleTypeOrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response({'data': serializer.data})
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class PaymentMethodOrderViewSet(viewsets.ModelViewSet):
     queryset = PaymentMethodOrder.objects.all()
@@ -137,3 +235,13 @@ class PaymentMethodOrderViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
         return Response({'data': serializer.data})
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)

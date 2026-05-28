@@ -25,10 +25,30 @@ class CountryViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response({'data': serializer.data})
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class ItemGroupViewSet(viewsets.ModelViewSet):
     queryset = ItemGroup.objects.all()
     serializer_class = ItemGroupSerializer
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
 
 
 class ItemViewSet(viewsets.ModelViewSet):
@@ -54,6 +74,16 @@ class ItemViewSet(viewsets.ModelViewSet):
             serializer.save(company_id=company_id)
         else:
             serializer.save()
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
 
 
 class ItemPriceViewSet(viewsets.ModelViewSet):
@@ -98,6 +128,16 @@ class ItemPriceViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
+
 
 class ThirdPartyViewSet(viewsets.ModelViewSet):
     serializer_class = ThirdPartySerializer
@@ -117,3 +157,13 @@ class ThirdPartyViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='third-party-types')
     def third_party_types(self, request, **kwargs):
         return Response({'data': [choice[0] for choice in ThirdParty.THIRD_PARTY_TYPE_CHOICES]})
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)

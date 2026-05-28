@@ -12,7 +12,7 @@ from .models import (
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
     list_display = ['code', 'name', 'company', 'item_group', 'unit_measure', 'is_variant', 'material', 'created_at']
-    list_filter = ['company', 'item_group', 'unit_measure', 'is_variant', 'material']
+    list_filter = [('company', admin.RelatedOnlyFieldListFilter), 'item_group', 'unit_measure', 'is_variant', 'material']
     search_fields = ['code', 'name', 'base_code', 'base_name']
     list_per_page = 50
     ordering = ['company', 'base_code', 'variant_code']

@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'corsheaders',
     'django_extensions',
+    'safedelete',
+    'simple_history',
     # Project apps
     'core',
     'reference_tables',
@@ -58,6 +60,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

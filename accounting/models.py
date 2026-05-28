@@ -5,13 +5,18 @@ Contains: Country, ItemGroup, Item, ItemPrice, ThirdParty, Order, OrderCounter.
 """
 
 from django.db import models, transaction
+from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
+from simple_history.models import HistoricalRecords
 
 
-class Country(models.Model):
+class Country(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     code = models.IntegerField(unique=True)
     name = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'countries'
@@ -20,10 +25,13 @@ class Country(models.Model):
         return self.name
 
 
-class ItemGroup(models.Model):
+class ItemGroup(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     name = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'item_groups'
@@ -32,7 +40,9 @@ class ItemGroup(models.Model):
         return self.name
 
 
-class Item(models.Model):
+class Item(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     # Base product information
     base_code = models.CharField(max_length=50, default='DEFAULT')
     variant_code = models.CharField(max_length=50, null=True, blank=True)
@@ -100,6 +110,7 @@ class Item(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'items'
@@ -118,7 +129,9 @@ class Item(models.Model):
         return f'{self.code} - {self.name}'
 
 
-class ItemPrice(models.Model):
+class ItemPrice(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     BUYING = 'buying'
     SELLING = 'selling'
     PRICE_TYPE_CHOICES = [
@@ -147,6 +160,7 @@ class ItemPrice(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'item_prices'
@@ -155,7 +169,9 @@ class ItemPrice(models.Model):
         return f'ItemPrice #{self.pk} for {self.item}'
 
 
-class ThirdParty(models.Model):
+class ThirdParty(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     SUPPLIER = 'supplier'
     CLIENT = 'client'
     EMPLOYEE = 'employee'
@@ -213,6 +229,7 @@ class ThirdParty(models.Model):
     second_last_name = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'third_parties'
@@ -226,13 +243,16 @@ class ThirdParty(models.Model):
         )
 
 
-class OrderCounter(models.Model):
+class OrderCounter(SafeDeleteModel):
     """Counter for generating sequential order numbers"""
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     company = models.ForeignKey('core.Company', on_delete=models.CASCADE)
     order_type = models.CharField(max_length=20)
     current_number = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
     
     class Meta:
         db_table = 'order_counters'
@@ -255,7 +275,9 @@ class OrderCounter(models.Model):
         return f'{self.company} - {self.order_type}: {self.current_number}'
 
 
-class Order(models.Model):
+class Order(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     ORDER_TYPE_CHOICES = [
         ('purchase', 'Purchase Order'),
         ('sale', 'Sale Order'),
@@ -308,6 +330,7 @@ class Order(models.Model):
     notes = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'orders'
@@ -325,7 +348,9 @@ class Order(models.Model):
         return f'{self.order_number} - {self.third_party}'
 
 
-class OrderItem(models.Model):
+class OrderItem(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -356,6 +381,7 @@ class OrderItem(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'order_items'
@@ -381,11 +407,14 @@ class OrderItem(models.Model):
         return f'{self.order.order_number} - {self.item_price.item}'
 
 
-class ItemPropertyDataType(models.Model):
+class ItemPropertyDataType(SafeDeleteModel):
     """Data types available for item properties (text, number, choice, etc.)"""
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     code = models.CharField(max_length=20, unique=True)  # internal identifier used in logic
     name = models.CharField(max_length=100)              # English display name
     name_es = models.CharField(max_length=100)           # Spanish display name
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'item_property_data_types'
@@ -395,8 +424,10 @@ class ItemPropertyDataType(models.Model):
         return self.name
 
 
-class ItemPropertyType(models.Model):
+class ItemPropertyType(SafeDeleteModel):
     """Define types of properties that items can have (color, brand, size, etc.)"""
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     name = models.CharField(max_length=100)
     data_type = models.ForeignKey(
         ItemPropertyDataType,
@@ -414,6 +445,7 @@ class ItemPropertyType(models.Model):
         related_name='item_property_types'
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'item_property_types'
@@ -423,8 +455,10 @@ class ItemPropertyType(models.Model):
         return self.name
 
 
-class ItemPropertyValue(models.Model):
+class ItemPropertyValue(SafeDeleteModel):
     """Possible values for choice-based properties"""
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     property_type = models.ForeignKey(
         ItemPropertyType,
         on_delete=models.CASCADE,
@@ -439,6 +473,7 @@ class ItemPropertyValue(models.Model):
         related_name='item_property_values'
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'item_property_values'
@@ -448,8 +483,10 @@ class ItemPropertyValue(models.Model):
         return f'{self.property_type.name}: {self.value}'
 
 
-class ItemProperty(models.Model):
+class ItemProperty(SafeDeleteModel):
     """Actual property values assigned to items"""
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
     item = models.ForeignKey(
         Item,
         on_delete=models.CASCADE,
@@ -474,6 +511,7 @@ class ItemProperty(models.Model):
     )
     
     created_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
 
     class Meta:
         db_table = 'item_properties'

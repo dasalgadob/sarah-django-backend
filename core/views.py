@@ -18,6 +18,14 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     pagination_class = SmallResultsSetPagination  # 10 items per page
 
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        try:
+            obj = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(self.get_serializer(obj).data)
+
 
 class RoleViewSet(viewsets.ModelViewSet):
     """CRUD for roles."""
@@ -25,6 +33,16 @@ class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all().order_by('id')
     serializer_class = RoleSerializer
     pagination_class = SmallResultsSetPagination  # 10 items per page
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -82,3 +100,13 @@ class CompanyViewSet(viewsets.ModelViewSet):
         if error is not None:
             return error
         return super().update(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        model = self.get_queryset().model
+        try:
+            obj = model.all_objects.get(pk=pk)
+        except model.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        obj.undelete()
+        return Response(self.get_serializer(obj).data)
