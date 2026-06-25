@@ -129,6 +129,15 @@ class ItemViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(obj).data)
 
 
+class ItemPriceFilter(django_filters.FilterSet):
+    code = django_filters.CharFilter(field_name='item__code', lookup_expr='icontains')
+    name = django_filters.CharFilter(field_name='item__name', lookup_expr='icontains')
+
+    class Meta:
+        model = ItemPrice
+        fields = ['code', 'name', 'item_price_type']
+
+
 class ItemPriceViewSet(viewsets.ModelViewSet):
     """Item prices scoped to a company via /companies/{company_pk}/item-prices/.
 
@@ -136,6 +145,14 @@ class ItemPriceViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = ItemPriceSerializer
+    filter_backends = [django_filters.DjangoFilterBackend, OrderingFilter]
+    filterset_class = ItemPriceFilter
+    ordering_fields = [
+        'item__code', 'item__name', 'item_price_type',
+        'price', 'iva', 'excise_tax', 'total',
+        'created_at', 'updated_at',
+    ]
+    ordering = ['-created_at']
 
     def get_queryset(self):
         company_id = self.kwargs.get('company_pk')
