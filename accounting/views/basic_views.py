@@ -1,12 +1,17 @@
 """Basic entity views for the accounting app."""
 
+import re
+
+from django.utils import timezone
 from django_filters import rest_framework as django_filters
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
+from core.models import Company
 from ..models import Country, ItemGroup, Item, ItemPrice, ThirdParty
 from ..serializers import (
     ChoiceSerializer,
@@ -14,9 +19,13 @@ from ..serializers import (
     ItemGroupSerializer,
     ItemSerializer,
     ItemSelectSerializer,
+    ItemImportResultSerializer,
     ItemPriceSerializer,
+    ItemUploadRequestSerializer,
     ThirdPartySerializer,
 )
+from ..services.item_excel_export import ItemExcelExporter
+from ..services.item_excel_import import InvalidWorkbookError, ItemExcelImporter
 
 
 class ItemFilter(django_filters.FilterSet):
@@ -117,6 +126,45 @@ class ItemViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = ItemSelectSerializer(queryset, many=True)
         return Response({'data': serializer.data})
+
+    @extend_schema(responses={200: OpenApiResponse(description='Archivo .xlsx con los items.')})
+    @action(detail=False, methods=['get'], url_path='download', pagination_class=None)
+    def download(self, request, **kwargs):
+        """Exports the current (filtered) item list to an .xlsx file."""
+        queryset = self.filter_queryset(self.get_queryset())
+        exporter = ItemExcelExporter(queryset)
+        return exporter.as_http_response(filename=self._download_filename())
+
+    def _download_filename(self):
+        today = timezone.localdate().isoformat()
+        company_id = self.kwargs.get('company_pk')
+        company = Company.objects.filter(pk=company_id).first() if company_id else None
+        if not company:
+            return f'Productos#{today}.xlsx'
+        company_name = re.sub(r'[\r\n"]', '', str(company)).strip()
+        return f'Productos#{company_name}#{today}.xlsx'
+
+    @extend_schema(request=ItemUploadRequestSerializer, responses=ItemImportResultSerializer)
+    @action(
+        detail=False, methods=['post'], url_path='upload',
+        parser_classes=[MultiPartParser], pagination_class=None,
+    )
+    def upload(self, request, **kwargs):
+        """Creates or updates items in bulk from an uploaded .xlsx file."""
+        company_id = self.kwargs.get('company_pk')
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response(
+                {'errors': {'file': ['Este campo es obligatorio.']}}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        importer = ItemExcelImporter(company_id=company_id)
+        try:
+            result = importer.import_workbook(file_obj)
+        except InvalidWorkbookError as exc:
+            return Response({'errors': {'file': [str(exc)]}}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(result.as_dict(), status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):

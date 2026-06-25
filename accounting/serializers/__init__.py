@@ -20,6 +20,12 @@ from .order_serializer import (
     ItemPropertySerializer,
 )
 
+from .item_excel_serializers import (
+    ItemUploadRequestSerializer,
+    ItemImportRowErrorSerializer,
+    ItemImportResultSerializer,
+)
+
 __all__ = [
     'ChoiceSerializer',
     'CountrySerializer',
@@ -35,4 +41,7 @@ __all__ = [
     'ItemPropertyTypeSerializer',
     'ItemPropertyValueSerializer',
     'ItemPropertySerializer',
+    'ItemUploadRequestSerializer',
+    'ItemImportRowErrorSerializer',
+    'ItemImportResultSerializer',
 ]

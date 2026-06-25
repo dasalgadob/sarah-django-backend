@@ -183,6 +183,10 @@ CORS_ALLOW_CREDENTIALS = True
 # Allow all headers during development
 CORS_ALLOW_ALL_HEADERS = True
 
+# Expose Content-Disposition so the frontend can read the filename from
+# file-download responses (e.g. items.xlsx export) via JS.
+CORS_EXPOSE_HEADERS = ['Content-Disposition']
+
 # ---------------------------------------------------------------------------
 # JWT Settings
 # ---------------------------------------------------------------------------
