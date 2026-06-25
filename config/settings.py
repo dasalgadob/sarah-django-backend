@@ -188,6 +188,16 @@ CORS_ALLOW_ALL_HEADERS = True
 CORS_EXPOSE_HEADERS = ['Content-Disposition']
 
 # ---------------------------------------------------------------------------
+# Upload size limits
+# Django's 2.5MB default is too small for the items/item-prices .xlsx upload
+# endpoints. Must be paired with the nginx client_max_body_size override in
+# .platform/nginx/conf.d/proxy.conf -- nginx sits in front of gunicorn on EB
+# and will reject oversized bodies before Django ever sees the request.
+# ---------------------------------------------------------------------------
+DATA_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
+
+# ---------------------------------------------------------------------------
 # JWT Settings
 # ---------------------------------------------------------------------------
 from datetime import timedelta
