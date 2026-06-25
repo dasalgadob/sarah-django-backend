@@ -3,6 +3,7 @@
 from rest_framework import serializers
 
 from ..models import Country, ItemGroup, Item, ItemPrice, ThirdParty
+from reference_tables.models import IvaType, IvaRate, ExciseTaxType, ExciseTaxRate
 
 
 class CountrySerializer(serializers.ModelSerializer):
@@ -15,6 +16,56 @@ class ItemGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemGroup
         fields = ['id', 'name']
+
+
+class ChoiceSerializer(serializers.Serializer):
+    """Generic value/label pair, used to document choice-field endpoints (e.g. price types)."""
+    value = serializers.CharField()
+    label = serializers.CharField()
+
+
+class IvaTypeSelectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IvaType
+        fields = ['id', 'name']
+
+
+class IvaRateSelectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IvaRate
+        fields = ['id', 'value']
+
+
+class ExciseTaxTypeSelectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExciseTaxType
+        fields = ['id', 'name']
+
+
+class ExciseTaxRateSelectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExciseTaxRate
+        fields = ['id', 'value']
+
+
+class ItemSelectSerializer(serializers.ModelSerializer):
+    """Lightweight Item representation for filter/select dropdowns.
+
+    Includes tax info so the frontend can auto-calculate iva/excise tax
+    for the selected item without an extra request.
+    """
+    iva_type = IvaTypeSelectSerializer(read_only=True)
+    iva_rate = IvaRateSelectSerializer(read_only=True)
+    excise_tax_type = ExciseTaxTypeSelectSerializer(read_only=True)
+    excise_tax_rate = ExciseTaxRateSelectSerializer(read_only=True)
+
+    class Meta:
+        model = Item
+        fields = [
+            'id', 'code', 'name',
+            'iva_type', 'iva_rate',
+            'excise_tax_type', 'excise_tax_rate',
+        ]
 
 
 class ItemSerializer(serializers.ModelSerializer):

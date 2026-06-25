@@ -1,17 +1,32 @@
 """Basic entity views for the accounting app."""
 
+from django_filters import rest_framework as django_filters
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
 from ..models import Country, ItemGroup, Item, ItemPrice, ThirdParty
 from ..serializers import (
+    ChoiceSerializer,
     CountrySerializer,
     ItemGroupSerializer,
     ItemSerializer,
+    ItemSelectSerializer,
     ItemPriceSerializer,
     ThirdPartySerializer,
 )
+
+
+class ItemFilter(django_filters.FilterSet):
+    base_code = django_filters.CharFilter(lookup_expr='icontains')
+    name = django_filters.CharFilter(lookup_expr='icontains')
+    base_name = django_filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = Item
+        fields = ['base_code', 'name', 'base_name', 'item_group']
 
 
 class CountryViewSet(viewsets.ModelViewSet):
@@ -55,6 +70,15 @@ class ItemViewSet(viewsets.ModelViewSet):
     """Items scoped to a company via /companies/{company_id}/items/."""
 
     serializer_class = ItemSerializer
+    filter_backends = [django_filters.DjangoFilterBackend, OrderingFilter]
+    filterset_class = ItemFilter
+    ordering_fields = [
+        'code', 'name', 'base_code', 'base_name',
+        'item_group__name', 'unit_measure__abbreviation',
+        'material', 'color', 'size', 'is_variant',
+        'created_at', 'updated_at',
+    ]
+    ordering = ['created_at']
 
     def get_queryset(self):
         company_id = self.kwargs.get('company_pk')
@@ -68,12 +92,31 @@ class ItemViewSet(viewsets.ModelViewSet):
             'iva_type', 'iva_rate', 'excise_tax_type', 'excise_tax_rate',
         ).all()
 
+    def create(self, request, *args, **kwargs):
+        company_id = self.kwargs.get('company_pk')
+        data = request.data.copy()
+        if company_id:
+            data['company'] = company_id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
         company_id = self.kwargs.get('company_pk')
         if company_id:
             serializer.save(company_id=company_id)
         else:
             serializer.save()
+
+    @extend_schema(responses=ItemSelectSerializer(many=True))
+    @action(detail=False, methods=['get'], url_path='select-list', pagination_class=None)
+    def select_list(self, request, **kwargs):
+        """Lightweight, unpaginated list of items (id, code, name) for filter/select inputs."""
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = ItemSelectSerializer(queryset, many=True)
+        return Response({'data': serializer.data})
 
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):
@@ -87,10 +130,9 @@ class ItemViewSet(viewsets.ModelViewSet):
 
 
 class ItemPriceViewSet(viewsets.ModelViewSet):
-    """
-    Item prices scoped to a company via /companies/{company_pk}/item-prices/.
+    """Item prices scoped to a company via /companies/{company_pk}/item-prices/.
 
-    POST also creates the Item in the same transaction (mirrors Rails behaviour).
+    POST expects an existing 'item' id; it does not create the Item.
     """
 
     serializer_class = ItemPriceSerializer
@@ -102,30 +144,28 @@ class ItemPriceViewSet(viewsets.ModelViewSet):
         return ItemPrice.objects.select_related('item').all()
 
     def create(self, request, *args, **kwargs):
-        from django.db import transaction
         company_id = self.kwargs.get('company_pk')
+        data = request.data.copy()
+        if company_id:
+            data['company'] = company_id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-        item_data = request.data.get('item', {})
-        item_price_data = request.data.get('item_price', {})
+    def perform_create(self, serializer):
+        company_id = self.kwargs.get('company_pk')
+        if company_id:
+            serializer.save(company_id=company_id)
+        else:
+            serializer.save()
 
-        with transaction.atomic():
-            item_data['company'] = company_id
-            item_serializer = ItemSerializer(data=item_data)
-            if not item_serializer.is_valid():
-                return Response({'errors': item_serializer.errors}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-            item = item_serializer.save()
-
-            price_data = dict(item_price_data)
-            price_data['item'] = item.pk
-            price_data['company'] = company_id
-            ip_serializer = ItemPriceSerializer(data=price_data)
-            if not ip_serializer.is_valid():
-                return Response({'errors': ip_serializer.errors}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-            item_price = ip_serializer.save()
-
+    @extend_schema(responses=ChoiceSerializer(many=True))
+    @action(detail=False, methods=['get'], url_path='price-types', pagination_class=None)
+    def price_types(self, request, **kwargs):
         return Response(
-            {'data': {'item': ItemSerializer(item).data, 'item_price': ItemPriceSerializer(item_price).data}},
-            status=status.HTTP_201_CREATED,
+            {'data': [{'value': value, 'label': label} for value, label in ItemPrice.PRICE_TYPE_CHOICES]}
         )
 
     @action(detail=True, methods=['post'])
