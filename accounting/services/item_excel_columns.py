@@ -2,6 +2,7 @@
 
 ITEMS_SHEET_NAME = 'Productos'
 
+ID = 'id'
 BASE_CODE = 'base_code'
 BASE_NAME = 'base_name'
 NAME = 'name'
@@ -13,6 +14,7 @@ EXCISE_TAX_TYPE = 'excise_tax_type'
 EXCISE_TAX_RATE = 'excise_tax_rate'
 
 COLUMN_ORDER = [
+    ID,
     BASE_CODE,
     BASE_NAME,
     NAME,
@@ -25,6 +27,7 @@ COLUMN_ORDER = [
 ]
 
 COLUMN_HEADERS = {
+    ID: 'Id (Solo Lectura)',
     BASE_CODE: 'Código base / Código de producto',
     BASE_NAME: 'Nombre base / Nombre del producto',
     NAME: 'Nombre detallado',

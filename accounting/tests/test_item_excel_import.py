@@ -27,7 +27,7 @@ class TestItemExcelImporter:
         self, company, item_group, unit_measure, iva_type, iva_rate,
     ):
         file_obj = _workbook_file([
-            ['TSHIRT001', 'Cotton T-Shirt', 'Cotton T-Shirt', item_group.name, unit_measure.abbreviation, iva_type.name, 19, None, None],
+            [None, 'TSHIRT001', 'Cotton T-Shirt', 'Cotton T-Shirt', item_group.name, unit_measure.abbreviation, iva_type.name, 19, None, None],
         ])
 
         result = ItemExcelImporter(company_id=company.id).import_workbook(file_obj)
@@ -44,7 +44,7 @@ class TestItemExcelImporter:
 
     def test_updates_existing_item_matched_by_company_and_code(self, company, item, item_group, unit_measure):
         file_obj = _workbook_file([
-            ['TSHIRT001', 'Updated Base Name', 'Updated Name', item_group.name, unit_measure.abbreviation, None, None, None, None],
+            [None, 'TSHIRT001', 'Updated Base Name', 'Updated Name', item_group.name, unit_measure.abbreviation, None, None, None, None],
         ])
 
         result = ItemExcelImporter(company_id=company.id).import_workbook(file_obj)
@@ -58,7 +58,7 @@ class TestItemExcelImporter:
 
     def test_skips_blank_rows(self, company, item_group, unit_measure):
         file_obj = _workbook_file([
-            [None, None, None, None, None, None, None, None, None],
+            [None, None, None, None, None, None, None, None, None, None],
         ])
 
         result = ItemExcelImporter(company_id=company.id).import_workbook(file_obj)
@@ -67,7 +67,7 @@ class TestItemExcelImporter:
 
     def test_reports_required_field_errors_without_raising(self, company, item_group, unit_measure):
         file_obj = _workbook_file([
-            [None, 'Base Name', 'Name', item_group.name, unit_measure.abbreviation, None, None, None, None],
+            [None, None, 'Base Name', 'Name', item_group.name, unit_measure.abbreviation, None, None, None, None],
         ])
 
         result = ItemExcelImporter(company_id=company.id).import_workbook(file_obj)
@@ -80,7 +80,7 @@ class TestItemExcelImporter:
 
     def test_reports_unresolvable_item_group_by_name(self, company, item_group, unit_measure):
         file_obj = _workbook_file([
-            ['TSHIRT001', 'Base Name', 'Name', 'Nonexistent Group', unit_measure.abbreviation, None, None, None, None],
+            [None, 'TSHIRT001', 'Base Name', 'Name', 'Nonexistent Group', unit_measure.abbreviation, None, None, None, None],
         ])
 
         result = ItemExcelImporter(company_id=company.id).import_workbook(file_obj)
@@ -92,7 +92,7 @@ class TestItemExcelImporter:
 
     def test_reports_iva_rate_not_found_for_given_type(self, company, item_group, unit_measure, iva_type):
         file_obj = _workbook_file([
-            ['TSHIRT001', 'Base Name', 'Name', item_group.name, unit_measure.abbreviation, iva_type.name, 99, None, None],
+            [None, 'TSHIRT001', 'Base Name', 'Name', item_group.name, unit_measure.abbreviation, iva_type.name, 99, None, None],
         ])
 
         result = ItemExcelImporter(company_id=company.id).import_workbook(file_obj)
@@ -103,7 +103,7 @@ class TestItemExcelImporter:
 
     def test_requires_iva_type_when_only_rate_given(self, company, item_group, unit_measure):
         file_obj = _workbook_file([
-            ['TSHIRT001', 'Base Name', 'Name', item_group.name, unit_measure.abbreviation, None, 19, None, None],
+            [None, 'TSHIRT001', 'Base Name', 'Name', item_group.name, unit_measure.abbreviation, None, 19, None, None],
         ])
 
         result = ItemExcelImporter(company_id=company.id).import_workbook(file_obj)
@@ -118,7 +118,7 @@ class TestItemExcelImporter:
             item_group=item_group, unit_measure=unit_measure, company=other_company,
         )
         file_obj = _workbook_file([
-            ['SHARED001', 'My Co Item', 'My Co Item', item_group.name, unit_measure.abbreviation, None, None, None, None],
+            [None, 'SHARED001', 'My Co Item', 'My Co Item', item_group.name, unit_measure.abbreviation, None, None, None, None],
         ])
 
         result = ItemExcelImporter(company_id=company.id).import_workbook(file_obj)

@@ -26,6 +26,12 @@ from .item_excel_serializers import (
     ItemImportResultSerializer,
 )
 
+from .item_price_excel_serializers import (
+    ItemPriceUploadRequestSerializer,
+    ItemPriceImportRowErrorSerializer,
+    ItemPriceImportResultSerializer,
+)
+
 __all__ = [
     'ChoiceSerializer',
     'CountrySerializer',
@@ -44,4 +50,7 @@ __all__ = [
     'ItemUploadRequestSerializer',
     'ItemImportRowErrorSerializer',
     'ItemImportResultSerializer',
+    'ItemPriceUploadRequestSerializer',
+    'ItemPriceImportRowErrorSerializer',
+    'ItemPriceImportResultSerializer',
 ]

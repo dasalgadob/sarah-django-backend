@@ -1,8 +1,5 @@
 """Basic entity views for the accounting app."""
 
-import re
-
-from django.utils import timezone
 from django_filters import rest_framework as django_filters
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework import viewsets, status
@@ -20,12 +17,20 @@ from ..serializers import (
     ItemSerializer,
     ItemSelectSerializer,
     ItemImportResultSerializer,
+    ItemPriceImportResultSerializer,
     ItemPriceSerializer,
+    ItemPriceUploadRequestSerializer,
     ItemUploadRequestSerializer,
     ThirdPartySerializer,
 )
+from ..services.excel_filenames import build_dated_filename
 from ..services.item_excel_export import ItemExcelExporter
 from ..services.item_excel_import import InvalidWorkbookError, ItemExcelImporter
+from ..services.item_price_excel_export import ItemPriceExcelExporter
+from ..services.item_price_excel_import import (
+    InvalidWorkbookError as ItemPriceInvalidWorkbookError,
+    ItemPriceExcelImporter,
+)
 
 
 class ItemFilter(django_filters.FilterSet):
@@ -136,13 +141,9 @@ class ItemViewSet(viewsets.ModelViewSet):
         return exporter.as_http_response(filename=self._download_filename())
 
     def _download_filename(self):
-        today = timezone.localdate().isoformat()
         company_id = self.kwargs.get('company_pk')
         company = Company.objects.filter(pk=company_id).first() if company_id else None
-        if not company:
-            return f'Productos#{today}.xlsx'
-        company_name = re.sub(r'[\r\n"]', '', str(company)).strip()
-        return f'Productos#{company_name}#{today}.xlsx'
+        return build_dated_filename('Productos', company)
 
     @extend_schema(request=ItemUploadRequestSerializer, responses=ItemImportResultSerializer)
     @action(
@@ -232,6 +233,41 @@ class ItemPriceViewSet(viewsets.ModelViewSet):
         return Response(
             {'data': [{'value': value, 'label': label} for value, label in ItemPrice.PRICE_TYPE_CHOICES]}
         )
+
+    @extend_schema(responses={200: OpenApiResponse(description='Archivo .xlsx con los precios.')})
+    @action(detail=False, methods=['get'], url_path='download', pagination_class=None)
+    def download(self, request, **kwargs):
+        """Exports the current (filtered) item price list to an .xlsx file."""
+        queryset = self.filter_queryset(self.get_queryset())
+        exporter = ItemPriceExcelExporter(queryset)
+        return exporter.as_http_response(filename=self._download_filename())
+
+    def _download_filename(self):
+        company_id = self.kwargs.get('company_pk')
+        company = Company.objects.filter(pk=company_id).first() if company_id else None
+        return build_dated_filename('Precios', company)
+
+    @extend_schema(request=ItemPriceUploadRequestSerializer, responses=ItemPriceImportResultSerializer)
+    @action(
+        detail=False, methods=['post'], url_path='upload',
+        parser_classes=[MultiPartParser], pagination_class=None,
+    )
+    def upload(self, request, **kwargs):
+        """Creates or updates item prices in bulk from an uploaded .xlsx file."""
+        company_id = self.kwargs.get('company_pk')
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response(
+                {'errors': {'file': ['Este campo es obligatorio.']}}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        importer = ItemPriceExcelImporter(company_id=company_id)
+        try:
+            result = importer.import_workbook(file_obj)
+        except ItemPriceInvalidWorkbookError as exc:
+            return Response({'errors': {'file': [str(exc)]}}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(result.as_dict(), status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):

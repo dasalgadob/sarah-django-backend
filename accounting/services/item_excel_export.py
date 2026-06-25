@@ -43,6 +43,7 @@ class ItemExcelExporter:
     @staticmethod
     def _row_for(item):
         return [
+            item.id,
             item.base_code,
             item.base_name,
             item.name,

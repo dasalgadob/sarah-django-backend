@@ -37,7 +37,8 @@ class TestItemDownloadEndpoint:
         workbook = openpyxl.load_workbook(filename=io.BytesIO(response.content))
         sheet = workbook.active
         assert [cell.value for cell in sheet[1]] == HEADER_ROW
-        assert sheet[2][0].value == item.base_code
+        assert sheet[2][0].value == item.id
+        assert sheet[2][1].value == item.base_code
 
     def test_download_filename_includes_company_name_and_today(self, api_client, company, item):
         from django.utils import timezone
@@ -84,7 +85,7 @@ class TestItemDownloadEndpoint:
         workbook = openpyxl.load_workbook(filename=io.BytesIO(response.content))
         sheet = workbook.active
         assert sheet.max_row == 2
-        assert sheet[2][2].value == 'Match Me'
+        assert sheet[2][3].value == 'Match Me'
 
     def test_download_requires_authentication(self, company, item):
         from rest_framework.test import APIClient
@@ -98,7 +99,7 @@ class TestItemDownloadEndpoint:
 class TestItemUploadEndpoint:
     def test_upload_creates_item(self, api_client, company, item_group, unit_measure):
         file_obj = _workbook_upload_file([
-            ['TSHIRT001', 'Cotton T-Shirt', 'Cotton T-Shirt', item_group.name, unit_measure.abbreviation, None, None, None, None],
+            [None, 'TSHIRT001', 'Cotton T-Shirt', 'Cotton T-Shirt', item_group.name, unit_measure.abbreviation, None, None, None, None],
         ])
 
         response = api_client.post(
@@ -111,7 +112,7 @@ class TestItemUploadEndpoint:
 
     def test_upload_updates_existing_item(self, api_client, company, item, item_group, unit_measure):
         file_obj = _workbook_upload_file([
-            ['TSHIRT001', 'Renamed', 'Renamed', item_group.name, unit_measure.abbreviation, None, None, None, None],
+            [None, 'TSHIRT001', 'Renamed', 'Renamed', item_group.name, unit_measure.abbreviation, None, None, None, None],
         ])
 
         response = api_client.post(
@@ -125,8 +126,8 @@ class TestItemUploadEndpoint:
 
     def test_upload_reports_row_errors_without_failing_whole_request(self, api_client, company, item_group, unit_measure):
         file_obj = _workbook_upload_file([
-            ['VALID001', 'Valid Item', 'Valid Item', item_group.name, unit_measure.abbreviation, None, None, None, None],
-            [None, 'Missing Code', 'Missing Code', item_group.name, unit_measure.abbreviation, None, None, None, None],
+            [None, 'VALID001', 'Valid Item', 'Valid Item', item_group.name, unit_measure.abbreviation, None, None, None, None],
+            [None, None, 'Missing Code', 'Missing Code', item_group.name, unit_measure.abbreviation, None, None, None, None],
         ])
 
         response = api_client.post(
@@ -162,7 +163,7 @@ class TestItemUploadEndpoint:
         from rest_framework.test import APIClient
 
         file_obj = _workbook_upload_file([
-            ['TSHIRT001', 'Cotton T-Shirt', 'Cotton T-Shirt', item_group.name, unit_measure.abbreviation, None, None, None, None],
+            [None, 'TSHIRT001', 'Cotton T-Shirt', 'Cotton T-Shirt', item_group.name, unit_measure.abbreviation, None, None, None, None],
         ])
 
         response = APIClient().post(

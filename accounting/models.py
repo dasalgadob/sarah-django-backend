@@ -390,17 +390,11 @@ class OrderItem(SafeDeleteModel):
         # Calculate line total if not already set
         if not self.line_total:
             self.line_total = self.quantity * self.unit_price
-        
-        # Calculate taxes based on item_price tax rates if not already set
-        if self.line_iva == 0 and self.item_price.iva:
-            self.line_iva = (self.line_total * self.item_price.iva) / 100
-        if self.line_excise_tax == 0 and self.item_price.excise_tax:
-            self.line_excise_tax = (self.line_total * self.item_price.excise_tax) / 100
-        
-        # Calculate final total if not already set  
+
+        # Calculate final total if not already set
         if not self.line_total_with_taxes:
             self.line_total_with_taxes = self.line_total + self.line_iva + self.line_excise_tax
-        
+
         super().save(*args, **kwargs)
         
     def __str__(self):

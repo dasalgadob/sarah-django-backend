@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
-from accounting.models import Country, Item, ItemGroup
+from accounting.models import Country, Item, ItemGroup, ItemPrice, ThirdParty
 from core.models import Company
 from reference_tables.models import (
     ColombianCity,
@@ -13,6 +13,8 @@ from reference_tables.models import (
     ExciseTaxType,
     IvaRate,
     IvaType,
+    PaymentMethodOrder,
+    SaleTypeOrder,
     UnitMeasure,
 )
 
@@ -95,6 +97,45 @@ def item(db, company, item_group, unit_measure, iva_type, iva_rate):
         iva_type=iva_type,
         iva_rate=iva_rate,
     )
+
+
+@pytest.fixture
+def item_price(db, item, company):
+    price = ItemPrice.objects.create(
+        item=item, company=company, item_price_type=ItemPrice.SELLING,
+        price='100000.00', iva='19000.00', excise_tax='0.00', total='119000.00',
+    )
+    price.refresh_from_db()
+    return price
+
+
+@pytest.fixture
+def third_party(db, company):
+    document_type = DocumentType.objects.create(code=13, name='Cédula de ciudadanía')
+    country = Country.objects.create(code=999, name='Third Party Country')
+    department = ColombianDepartment.objects.create(code='99', name='Cundinamarca')
+    city = ColombianCity.objects.create(code='99001', name='Soacha', colombian_department=department)
+    return ThirdParty.objects.create(
+        document_type=document_type,
+        document_number=1000999888,
+        neighborhood='Centro',
+        third_party_type=ThirdParty.CLIENT,
+        company=company,
+        country=country,
+        colombian_city=city,
+        colombian_department=department,
+        legal_name='Client Test SAS',
+    )
+
+
+@pytest.fixture
+def sale_type(db):
+    return SaleTypeOrder.objects.create(name='Retail')
+
+
+@pytest.fixture
+def payment_method(db):
+    return PaymentMethodOrder.objects.create(name='Cash')
 
 
 @pytest.fixture

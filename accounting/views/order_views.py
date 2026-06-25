@@ -9,7 +9,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 
 from ..models import Order, OrderItem, ItemPropertyType, ItemPropertyValue, ItemProperty, ItemPropertyDataType
 from ..serializers.order_serializer import (
-    OrderSerializer, OrderCreateSerializer, OrderItemSerializer,
+    OrderSerializer, OrderCreateSerializer, OrderUpdateSerializer, OrderItemSerializer,
     ItemPropertyDataTypeSerializer, ItemPropertyTypeSerializer, ItemPropertyValueSerializer, ItemPropertySerializer
 )
 
@@ -27,7 +27,18 @@ class OrderViewSet(viewsets.ModelViewSet):
         """Use different serializers for different actions."""
         if self.action == 'create':
             return OrderCreateSerializer
+        if self.action in ('update', 'partial_update'):
+            return OrderUpdateSerializer
         return OrderSerializer
+
+    def update(self, request, *args, **kwargs):
+        """Save via OrderUpdateSerializer, but respond with the full OrderSerializer representation."""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        return Response(OrderSerializer(order, context=self.get_serializer_context()).data)
 
     def get_queryset(self):
         """Filter queryset by company if user is associated with one."""

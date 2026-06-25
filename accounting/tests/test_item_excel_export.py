@@ -21,7 +21,7 @@ class TestItemExcelExporter:
     def test_build_workbook_writes_item_row_with_resolved_tax_names(
         self, company, item_group, unit_measure, iva_type, iva_rate, excise_tax_type, excise_tax_rate,
     ):
-        Item.objects.create(
+        item = Item.objects.create(
             base_code='TSHIRT001',
             base_name='Cotton T-Shirt',
             name='Cotton T-Shirt',
@@ -39,6 +39,7 @@ class TestItemExcelExporter:
         row = [cell.value for cell in sheet[2]]
 
         assert row == [
+            item.id,
             'TSHIRT001',
             'Cotton T-Shirt',
             'Cotton T-Shirt',
@@ -64,7 +65,7 @@ class TestItemExcelExporter:
         sheet = exporter.build_workbook().active
         row = [cell.value for cell in sheet[2]]
 
-        assert row[5:] == [None, None, None, None]
+        assert row[6:] == [None, None, None, None]
 
     def test_as_http_response_returns_xlsx_attachment(self, company, item_group, unit_measure, item):
         exporter = ItemExcelExporter(Item.objects.filter(company=company))
