@@ -89,6 +89,16 @@ OpenAPI documentation for these actions needs an explicit `@extend_schema(...)` 
 
 `CORS_ALLOW_ALL_HEADERS` (in `config/settings.py`) controls which **request** headers the browser may send — it does *not* expose response headers to frontend JS. Any endpoint that returns a `Content-Disposition` filename (the Excel downloads) needs the header listed in `CORS_EXPOSE_HEADERS`, or the frontend's `fetch()` will see `null` for it.
 
+### Production: file uploads can be blocked at three different layers
+
+Large multipart uploads (the Excel `upload` endpoints) on the EB deployment can fail at any of three layers **before** Django/DRF or CORS ever run — a browser "CORS error" on these endpoints is usually a red herring. Check in this order:
+
+1. **nginx body size limit.** EB's Python 3.13 platform runs nginx in front of gunicorn with a default `client_max_body_size` of 1MB, which silently rejects large bodies before Django sees the request. Fixed via `.platform/nginx/conf.d/proxy.conf` (`client_max_body_size 25M;` — EB auto-loads `.platform/nginx/conf.d/*.conf` on deploy).
+2. **Django's own upload limits.** `DATA_UPLOAD_MAX_MEMORY_SIZE`/`FILE_UPLOAD_MAX_MEMORY_SIZE` default to 2.5MB; raised to 25MB in `config/settings.py` to match #1 — the two limits must be kept in sync.
+3. **CloudFront's built-in WAF ("Core protections").** This distribution uses the simplified CloudFront-native WAF (Security tab → Manage protections), not a full custom Web ACL, and it has **no per-path/per-rule exclusions** — only a distribution-wide "Use monitor mode" toggle. Its generic vulnerability/bad-actor signatures false-positived on the binary multipart `.xlsx` body, returning a CloudFront-generated 403 (`server: CloudFront`, `x-cache: Error from cloudfront`, no Django JSON body) that looks like a CORS failure in the browser console but never reaches Django. **Decision:** monitor mode is left ON (logging only, not blocking) rather than building a full custom AWS WAF Web ACL with a scope-down exclusion — acceptable because every endpoint already requires JWT auth (`IsAuthenticated`), so this WAF layer was defense-in-depth, not the primary safeguard. Revisit with a real Web ACL (region "Global (CloudFront)") if stronger protection is needed without sacrificing uploads.
+
+When debugging a "CORS error" on these endpoints in production, inspect response headers first (`server`, `x-cache`, body size/content-type) to tell which of the three layers is actually responsible before touching `CORS_ALLOWED_ORIGINS`/`CORS_EXPOSE_HEADERS`.
+
 ### Pagination
 
 Default pagination is `core.pagination.CustomPageNumberPagination`, which renames `results` → `data` and adds `total_pages` to the standard DRF paginated response shape. `LargeResultsSetPagination`/`SmallResultsSetPagination` (also in `core/pagination.py`) override `page_size` for specific viewsets. Endpoints meant to populate a frontend `<select>` (e.g. `items/select-list/`, `*-types/` choice endpoints) explicitly set `pagination_class = None` on the action.

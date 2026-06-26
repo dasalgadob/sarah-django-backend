@@ -231,6 +231,26 @@ POST /api/auth/logout/
 - Access Token: 60 minutes
 - Refresh Token: 7 days
 
+## Production troubleshooting
+
+### "CORS error" on the Excel upload endpoints in production
+
+If `items/upload/` or `item-prices/upload/` fail with what looks like a CORS error in the browser console when deployed to Elastic Beanstalk + CloudFront, the request is most likely being rejected **before** it reaches Django — check these three layers in order:
+
+1. **nginx body size limit.** EB's Python 3.13 platform runs nginx in front of gunicorn with a default `client_max_body_size` of 1MB, which silently drops large multipart bodies. Fixed by adding `.platform/nginx/conf.d/proxy.conf`:
+   ```
+   client_max_body_size 25M;
+   ```
+   EB automatically loads any `.conf` file under `.platform/nginx/conf.d/` on deploy.
+
+2. **Django's own upload limits.** `DATA_UPLOAD_MAX_MEMORY_SIZE` and `FILE_UPLOAD_MAX_MEMORY_SIZE` default to 2.5MB. Raised to match nginx in `config/settings.py`:
+   ```python
+   DATA_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
+   FILE_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
+   ```
+
+3. **CloudFront's built-in WAF ("Core protections").** If the response has `server: CloudFront`, `x-cache: Error from cloudfront`, and a small generic HTML body (no Django JSON) with a `403`, CloudFront's bundled WAF — not Django — is blocking the request. The binary multipart `.xlsx` body can trip its generic vulnerability/bad-actor signatures. This simplified CloudFront-native WAF panel (Security tab → Manage protections) has no per-path/per-rule exclusions, only a distribution-wide **"Use monitor mode"** toggle (logs instead of blocks). Current setup leaves monitor mode **on** for this distribution, since every API endpoint already requires JWT authentication — losing this extra blocking layer was an acceptable tradeoff to unblock uploads. A scoped fix (a full custom AWS WAF Web ACL with a path/content-type exclusion) is the better long-term answer if stronger protection is needed later.
+
 ## PostgreSQL environment variables
 
 | Variable | Default | Description |
